@@ -42,7 +42,7 @@
         <root level="error">
             <appender-ref ref="FILEOUT"/>
         </root>
-        <logger name="tr.gov.toki" additivity="false" level="debug">
+        <logger name="tr.com.trackago" additivity="false" level="debug">
             <appender-ref ref="FILEOUT"/>
         </logger>
     </springProfile>
