@@ -1,0 +1,65 @@
+server:
+  servlet:
+    context-path: /kafkamanager
+  port: '9099'
+
+build:
+  name: '@project.artifactId@'
+  version: '@project.version@'
+  timestamp: '@timestamp@'
+
+spring:
+  application:
+    name: kafka-manager
+  banner:
+    location: banner.txt
+  profiles:
+    active: ${_SPRING_PROFILE:dev}
+  kafka:
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      bootstrap-servers: ${_PRODUCER_ADRESS:localhost:9093}
+    consumer:
+      group-id: ${_KAFKA_GROUP_ID:testgroup}
+      auto-offset-reset: earliest
+      properties:
+        spring:
+          deserializer:
+            value:
+              delegate:
+                class: org.springframework.kafka.support.serializer.JsonDeserializer
+          json:
+            trusted:
+              packages: '*'
+      bootstrap-servers: ${_CONSUMER_ADRESS:192.168.20.27:9093}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+topic:
+  name:
+    consumer: ${_CONSUMER_TOPIC:other}
+kafkamanager:
+  consumer: ${_CONSUMER_ACTIVE:true}
+  producer: ${_PRDOUCER_ACTIVE:true}
+
+logging:
+  file:
+    path: ${LOGBACK_REMOTE_PATH:./logs}
+    name: ${spring.application.name}
+  logback:
+    rollingpolicy:
+      clean-history-on-start: ${LOGBACK_CLEAN_HISTORY:true}
+      max-history: 30
+      max-file-size: 10MB
+
+
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /kafkamanager.json
+

@@ -21,9 +21,25 @@
     <java.version>1.8</java.version>
   </properties>
 
-  <dependencies>
+  <!-- repository maven pull -->
+  <repositories>
+    <repository>
+      <id>repository.trackago.com.tr</id>
+      <url>http://localhost:8081/repository/maven-public/</url>
+    </repository>
+  </repositories>
 
-  </dependencies>
+  <!-- repository maven publish -->
+  <distributionManagement>
+    <repository>
+      <id>repository.trackago.com.tr</id>
+      <url>http://localhost:8081/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>repository.trackago.com.tr</id>
+      <url>http://localhost:8081/repository/maven-snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <modules>
     <module>kafka-base</module>

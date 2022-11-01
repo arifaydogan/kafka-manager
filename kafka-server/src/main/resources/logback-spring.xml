@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %highlight(%-5level) %magenta(%d{dd-MM-yyyy HH:mm:ss}) %cyan(%logger{0}) %blue(method:) %M - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILEOUT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE}.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>
+                %-5level %d{dd-MM-yyyy HH:mm:ss} %logger{0} method: %M - %msg%n
+            </Pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/archive/${LOG_FILE}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>60</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <springProfile name="dev">
+        <root level="info">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILEOUT"/>
+        </root>
+        <logger name="tr.com.trackago" additivity="false" level="info">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILEOUT"/>
+        </logger>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="error">
+            <appender-ref ref="FILEOUT"/>
+        </root>
+        <logger name="tr.gov.toki" additivity="false" level="debug">
+            <appender-ref ref="FILEOUT"/>
+        </logger>
+    </springProfile>
+</configuration>

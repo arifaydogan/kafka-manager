@@ -18,28 +18,238 @@
 
   <properties>
     <java.version>1.8</java.version>
+    <timestamp>${maven.build.timestamp}</timestamp>
+    <maven.build.timestamp.format>dd-MM-yyyy HH:mm</maven.build.timestamp.format>
+    <!-- docker registry properties (nexus) -->
+    <docker-registry.host.push>localhost:8082</docker-registry.host.push>
+    <docker-registry.host.pull>localhost:8086</docker-registry.host.pull>
+    <!-- jar file name  -->
+    <finalName>${project.artifactId}-${project.version}</finalName>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20220320</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.8.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-swagger2</artifactId>
+      <version>2.9.2</version>
+    </dependency>
+    <!-- Swagger UI -->
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-swagger-ui</artifactId>
+      <version>2.9.2</version>
+    </dependency>
+    <dependency>
+      <groupId>tr.com.trackago</groupId>
+      <artifactId>kafka-base</artifactId>
+      <version>1.0.0</version>
+    </dependency>
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+
+  <profiles>
+    <profile>
+      <id>payment</id>
+      <dependencies>
+        <dependency>
+          <groupId>tr.com.trackago</groupId>
+          <artifactId>payment-consumer</artifactId>
+          <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>transfer</id>
+      <dependencies>
+        <dependency>
+          <groupId>tr.com.trackago</groupId>
+          <artifactId>transfer-consumer</artifactId>
+          <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>dev</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.6.1</version>
+            <configuration>
+              <source>${java.version}</source>
+              <target>${java.version}</target>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>prod</id>
+      <build>
+        <finalName>${finalName}</finalName>
+        <resources>
+          <resource>
+            <filtering>true</filtering>
+            <directory>src/main/resources</directory>
+            <includes>
+              <include>application.yml</include>
+            </includes>
+          </resource>
+        </resources>
+        <plugins>
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <!-- run springboot as service on linux -->
+            <configuration>
+              <executable>true</executable>
+            </configuration>
+          </plugin>
+          <!-- maven versioning plugin -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>versions-maven-plugin</artifactId>
+          </plugin>
+          <!-- maven jdk 1.8 as defautl compiler -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <target>${java.version}</target>
+              <source>${java.version}</source>
+            </configuration>
+          </plugin>
+          <!-- docker maven plugin for build image docker from maven command line -->
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>1.1.1</version>
+            <executions>
+              <!-- build image on mvn package command executed -->
+              <execution>
+                <id>build-image</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+              <!-- create tag on mvn deploy command executed  -->
+              <execution>
+                <id>tag-image-latest</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>tag</goal>
+                </goals>
+                <configuration>
+                  <image>${project.artifactId}:${project.version}</image>
+                  <newName>${docker-registry.host.push}/${project.artifactId}:latest</newName>
+                </configuration>
+              </execution>
+              <execution>
+                <id>tag-image</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>tag</goal>
+                </goals>
+                <configuration>
+                  <forceTags>true</forceTags>
+                  <image>${project.artifactId}:${project.version}</image>
+                  <newName>
+                    ${docker-registry.host.push}/${project.artifactId}:${project.version}
+                  </newName>
+                </configuration>
+              </execution>
+              <!-- publish to private repository on mvn deploy command executed -->
+              <execution>
+                <id>push-image</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>push</goal>
+                </goals>
+                <configuration>
+                  <retryPushCount>2</retryPushCount>
+                  <imageName>
+                    ${docker-registry.host.push}/${project.artifactId}:${project.version}
+                  </imageName>
+                </configuration>
+              </execution>
+            </executions>
+            <configuration>
+              <imageName>${project.artifactId}:${project.version}</imageName>
+              <!--  <dockerDirectory>${project.basedir}</dockerDirectory>-->
+              <baseImage>openjdk:8-alpine</baseImage>
+              <entryPoint>["java", "-jar", "/${project.build.finalName}.jar"]</entryPoint>
+              <resources>
+                <!-- copy jar file after build to docker image -->
+                <resource>
+                  <targetPath>/</targetPath>
+                  <directory>${project.build.directory}</directory>
+                  <includes>
+                    <include>${project.build.finalName}.jar</include>
+                  </includes>
+                </resource>
+              </resources>
+              <maintainer>Arif Aydogan (aydoganarif@outlook.com)</maintainer>
+              <imageTags>
+                <imageTag>${project.version}</imageTag>
+                <imageTag>latest</imageTag>
+              </imageTags>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
