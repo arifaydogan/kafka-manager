@@ -1,0 +1,25 @@
+version: "3.7"
+services:
+  kafka-manager:
+    image: localhost:8082/kafka-manager
+    ports:
+      - "9099:9099"
+    networks:
+      - trackago
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    environment:
+      - _PRODUCER_ACTIVE=true
+      - _PRODUCER_ADRESS=localhost:9093
+      - _CONSUMER_ACTIVE=false
+      - _CONSUMER_ADRESS=localhost:9093
+      - _KAFKA_GROUP_ID=testgroup
+      - _CONSUMER_TOPIC=test
+      - _SPRING_PROFILE=prod
+networks:
+  trackago:
